@@ -8,7 +8,7 @@ const postNew = async (req, res) => {
 
   if (user) {
     return res.status(201).json({ id: user.insertedId, email });
-  } return res.status(400).json({ error: 'Already exists' });
+  } return res.status(400).json({ error: 'Already exist' });
 };
 
 module.exports = postNew;
