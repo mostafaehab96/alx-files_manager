@@ -1,4 +1,5 @@
 const { MongoClient } = require('mongodb');
+const sha1 = require('sha1');
 
 const DB_HOST = process.env.DB_HOST || 'localhost';
 const DB_PORT = process.env.DB_PORT || '27017';
@@ -10,7 +11,11 @@ class DBClient {
       { useUnifiedTopology: true });
     this.client.connect((err) => {
       if (err) console.log('Error Connecting to the database', err.message);
-      else console.log('Successfully connected to the database');
+      else {
+        console.log('Successfully connected to the database');
+        this.users = this.client.db().collection('users');
+        this.files = this.client.db().collection('files');
+      }
     });
   }
 
@@ -20,12 +25,21 @@ class DBClient {
 
   async nbUsers() {
     // eslint-disable-next-line no-return-await
-    return await this.client.db().collection('users').countDocuments();
+    return await this.users.countDocuments();
   }
 
   async nbFiles() {
     // eslint-disable-next-line no-return-await
-    return await this.client.db().collection('files').countDocuments();
+    return await this.files.countDocuments();
+  }
+
+  async addUser(user) {
+    let newUser = await this.users.findOne({ email: user.email });
+    if (newUser) return null;
+    newUser = { ...user };
+    newUser.password = sha1(user.password);
+    newUser = await this.users.insertOne(newUser);
+    return newUser;
   }
 }
 
