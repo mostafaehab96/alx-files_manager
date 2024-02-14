@@ -1,4 +1,6 @@
+const { ObjectId } = require('mongodb');
 const dbClient = require('../utils/db');
+const redisClient = require('../utils/redis');
 
 const postNew = async (req, res) => {
   const [email, password] = [req.body.email, req.body.password];
@@ -11,4 +13,26 @@ const postNew = async (req, res) => {
   } return res.status(400).json({ error: 'Already exist' });
 };
 
-module.exports = postNew;
+const getMe = async (req, res) => {
+  const tokenHeader = req.headers['x-token'];
+  const key = `auth_${tokenHeader}`;
+  const userId = await redisClient.get(key);
+  const user = await dbClient.users.findOne({ _id: ObjectId(userId) });
+  if (user) return res.json({ id: user._id, email: user.email });
+
+  return res.status(401).json({ error: 'Unauthorized' });
+};
+
+const getDisconnect = async (req, res) => {
+  const tokenHeader = req.headers['x-token'];
+  const key = `auth_${tokenHeader}`;
+  const userId = await redisClient.get(key);
+  const user = await dbClient.users.findOne({ _id: ObjectId(userId) });
+  if (user) {
+    await redisClient.del(key);
+    return res.status(204).end();
+  }
+  return res.status(401).json({ error: 'Unauthorized' });
+};
+
+module.exports = { postNew, getMe, getDisconnect };
