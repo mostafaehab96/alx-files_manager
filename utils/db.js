@@ -41,6 +41,12 @@ class DBClient {
     newUser = await this.users.insertOne(newUser);
     return newUser;
   }
+
+  // eslint-disable-next-line consistent-return
+  async addFile(file) {
+    const newFile = await this.files.insertOne(file);
+    return newFile.insertedId;
+  }
 }
 
 const dbClient = new DBClient();
